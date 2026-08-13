@@ -1,0 +1,3 @@
+[submodule "tiring_solver"]
+	path = winds/tiring_solver
+	url = https://github.com/nkaaz/owocki_winds.git

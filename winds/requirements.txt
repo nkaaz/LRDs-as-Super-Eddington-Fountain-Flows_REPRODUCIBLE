@@ -1,0 +1,7 @@
+# Exact versions used to generate the packaged results.
+# Newer versions should work; solve_bvp mesh refinement may differ slightly.
+numpy==2.4.2
+scipy==1.16.2
+matplotlib==3.10.6
+# For executing the figure notebook:
+jupyter
