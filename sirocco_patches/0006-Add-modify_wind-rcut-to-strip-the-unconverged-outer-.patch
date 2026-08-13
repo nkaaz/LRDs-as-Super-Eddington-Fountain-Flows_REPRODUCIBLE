@@ -1,0 +1,103 @@
+From c5c64fd8d072521668450b6526c7a2d77604bdc1 Mon Sep 17 00:00:00 2001
+From: Nick Kaaz <nk6352@stellar-intel.princeton.edu>
+Date: Sun, 26 Jul 2026 10:12:28 -0400
+Subject: [PATCH 6/6] Add modify_wind -rcut to strip the unconverged outer wind
+ for spectra
+
+New switch `modify_wind -rcut <radius_cm> -out_root cut full` makes every wind
+cell whose centre lies beyond <radius> optically transparent, by flooring ne,
+rho and all ion densities to 1e-30. bound-free/bound-bound opacity and
+emissivity (den_config = levden * ion_density) and electron scattering all
+drop to ~0.
+
+Used to extract a spectrum from the converged inner wind only: the high-density
+production runs (tau_es up to ~100) leave a ragged unconverged outer tail whose
+spurious opacity/emission otherwise contaminates the emergent continuum. Pair
+with a System_type=previous, Ionization_cycles=0 restart reading cut.wind_save.
+
+Isolated from the rejected jbar / SIROCCO_EXTRACT_RADIUS work it was stashed
+alongside; only the modify_wind.c change is taken.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+---
+ source/modify_wind.c | 43 +++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 43 insertions(+)
+
+diff --git a/source/modify_wind.c b/source/modify_wind.c
+index 0193629c..03bf0f05 100644
+--- a/source/modify_wind.c
++++ b/source/modify_wind.c
+@@ -35,6 +35,8 @@
+ 
+ char inroot[LINELENGTH], outroot[LINELENGTH], model_file[LINELENGTH];
+ int model_flag, ksl_flag, cmf2obs_flag, obs2cmf_flag;
++int rcut_flag;                  /* NSH: zero-out (make transparent) all cells beyond rcut_val */
++double rcut_val;
+ 
+ /**********************************************************/
+ /**
+@@ -71,6 +73,8 @@ xparse_command_line (argc, argv)
+   sprintf (outroot, "%s", "new");
+ 
+   model_flag = ksl_flag = obs2cmf_flag = cmf2obs_flag = 0;
++  rcut_flag = 0;
++  rcut_val = 0.0;
+ 
+   if (argc == 1)
+   {
+@@ -132,6 +136,17 @@ xparse_command_line (argc, argv)
+       {
+         cmf2obs_flag = 1;
+       }
++      else if (strcmp (argv[i], "-rcut") == 0)
++      {
++        if (sscanf (argv[i + 1], "%le", &rcut_val) != 1)
++        {
++          printf ("sirocco: Expected a radius (cm) after -rcut switch\n");
++          exit (0);
++        }
++        rcut_flag = 1;
++        i++;
++        j = i;
++      }
+       else if (strncmp (argv[i], "-", 1) == 0)
+       {
+         printf ("sirocco: Unknown switch %s\n", argv[i]);
+@@ -242,6 +257,34 @@ main (argc, argv)
+     put_ion (0, 1, 1, den);
+   }
+ 
++  if (rcut_flag)
++  {
++    /* NSH: make every wind cell whose centre lies beyond rcut_val optically
++       transparent, by flooring ne, rho and every ion density to a negligible
++       value.  Since den_config() = levden[level] * density[ion], this drives
++       all bound-free / bound-bound opacity (and emissivity) to ~0, and ne~0
++       kills electron scattering.  Used to strip the unconverged outer wind
++       for a spectrum-only extraction. */
++    int n, np, nion, ncut = 0;
++    double r;
++    for (n = 0; n < NDIM2; n++)
++    {
++      if (wmain[n].inwind < 0)
++        continue;
++      r = length (wmain[n].xcen);
++      if (r > rcut_val)
++      {
++        np = wmain[n].nplasma;
++        plasmamain[np].ne = 1.e-30;
++        plasmamain[np].rho = 1.e-30;
++        for (nion = 0; nion < nions; nion++)
++          plasmamain[np].density[nion] = 1.e-30;
++        ncut++;
++      }
++    }
++    printf ("rcut: made %d cells transparent (centre r > %.4e cm)\n", ncut, rcut_val);
++  }
++
+ 
+   printf ("outputting to %s\n", outfile);
+ 
+-- 
+2.43.7
+

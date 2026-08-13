@@ -1,0 +1,82 @@
+From e91c0c2840c2e16f97217af9e555022eb9f8b464 Mon Sep 17 00:00:00 2001
+From: Nick Kaaz <nk6352@stellar-intel.princeton.edu>
+Date: Mon, 4 May 2026 15:41:55 -0400
+Subject: [PATCH 1/6] =?UTF-8?q?Add=20Central=5Fobject.dilution=5Ffactor=20?=
+ =?UTF-8?q?to=20decouple=20L=20from=204=CF=80R=C2=B2=CF=83T=E2=81=B4?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- setup_star_bh.c: read new pf parameter Central_object.dilution_factor
+  (default 1.0 preserves stock bare-BB behaviour). Fold W into
+  geo.lum_star = W * 4πR²σT⁴ so the band-luminosity sum is reduced
+  consistently while T continues to set the spectral shape.
+- photon_gen.c: in star_init, scale the integrated-Planck flux by
+  geo.lum_star_init / (4πR²σT⁴_init) so per-band emission picks up
+  the same dilution. Stock W=1 is a no-op.
+
+Lets the central source act as a diluted BB representing (e.g.) a deep
+diffusion layer where T sets the colour but the emerging luminosity is
+sub-Eddington — needed for super-Eddington outflow models where the
+photosphere is well below 4πR²σT⁴.
+
+Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
+---
+ source/photon_gen.c    | 5 +++++
+ source/setup_star_bh.c | 9 ++++++++-
+ 2 files changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/source/photon_gen.c b/source/photon_gen.c
+index b6942f3e..cc81b74d 100644
+--- a/source/photon_gen.c
++++ b/source/photon_gen.c
+@@ -855,6 +855,11 @@ star_init (freqmin, freqmax, ioniz_or_extract, f)
+ 
+   *f = emit;                    // Calculate the surface flux between freqmin and freqmax
+   *f *= (4. * PI * r * r);
++  /* Apply dilution factor implicit in lum_star_init: W = lum_star_init / (4πR²σT⁴_init).
++   * For bare BB (stock Central_object.dilution_factor = 1.0) this ratio is 1 and
++   * *f is unchanged. For W < 1 the band luminosity is reduced by the same factor. */
++  if (geo.tstar_init > 0.0)
++    *f *= geo.lum_star_init / (4. * PI * geo.rstar * geo.rstar * STEFAN_BOLTZMANN * pow (geo.tstar_init, 4.));
+ 
+ 
+   return (0);
+diff --git a/source/setup_star_bh.c b/source/setup_star_bh.c
+index c43d3e29..34afe4de 100644
+--- a/source/setup_star_bh.c
++++ b/source/setup_star_bh.c
+@@ -46,6 +46,7 @@ double
+ get_stellar_params ()
+ {
+   char answer[LINELENGTH];
++  double w_dilute = 1.0;
+ 
+   rdpar_comment ("Parameters for the Central Object");
+ 
+@@ -117,7 +118,10 @@ get_stellar_params ()
+     }
+ 
+     if (geo.star_radiation)
++    {
+       rddoub ("Central_object.temp", &geo.tstar_init);
++      rddoub ("Central_object.dilution_factor", &w_dilute);
++    }
+   }
+   else
+   {
+@@ -129,7 +133,10 @@ get_stellar_params ()
+ 
+   geo.tstar = geo.tstar_init;
+ 
+-  geo.lum_star = geo.lum_star_init = 4 * PI * geo.rstar * geo.rstar * STEFAN_BOLTZMANN * pow (geo.tstar, 4.);
++  /* dilution factor decouples L from 4πR²σT⁴: default 1.0 preserves bare-BB;
++   * W<1 lets T set the emission spectrum while L is reduced, so the source
++   * acts as a diluted BB representing (e.g.) a deep diffusion layer */
++  geo.lum_star = geo.lum_star_init = w_dilute * 4 * PI * geo.rstar * geo.rstar * STEFAN_BOLTZMANN * pow (geo.tstar, 4.);
+ 
+ 
+   /* Describe the secondary if that is required */
+-- 
+2.43.7
+

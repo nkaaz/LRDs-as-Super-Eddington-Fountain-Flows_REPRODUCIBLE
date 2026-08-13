@@ -1,0 +1,45 @@
+From d4dd6fc179ddf3af2f6cf8f2c065fee773bf514e Mon Sep 17 00:00:00 2001
+From: Nick Kaaz <nk6352@stellar-intel.princeton.edu>
+Date: Fri, 17 Jul 2026 10:44:10 -0400
+Subject: [PATCH 4/6] Raise MAXSCAT 2000 -> 200000 to stop discarding
+ thick-wind photons
+
+trans_phot.c terminates any photon reaching MAXSCAT scatters with
+P_TOO_MANY_SCATTERS and discards its energy. The tau_es~100 photon-tired
+winds need ~50k scatters per photon to escape, so the upstream default of
+2000 destroyed ~94% of the luminosity: photon fates for pt_m5 were
+escape=332 / too_many_scatters=1650 (vs escape=6730 / too_many=0 with the
+cap raised), giving a 20x too-faint spectrum and starving the radiation
+field enough to drive spurious recombination.
+
+This is independent of the Lya-trapping feature it was previously bundled
+with; the photon-tired production runs need it on its own merits. The
+marginally-unbound winds peak at ~1200 scatters and are unaffected.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+---
+ source/sirocco.h | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/source/sirocco.h b/source/sirocco.h
+index 53979472..4a8efd24 100644
+--- a/source/sirocco.h
++++ b/source/sirocco.h
+@@ -141,7 +141,13 @@ extern int NWAVE_NOW;         /**< Either NWAVE_IONIZ or NWAVE_EXTRACT depending
+                                 */
+ #define NWAVE_MIN   100       /**< The minimum number of wavelength bins in during spectral cycles
+                                */
+-#define MAXSCAT    2000
++#define MAXSCAT    200000     /**< Photons reaching this many scatters are destroyed by
++                                 trans_phot.c (P_TOO_MANY_SCATTERS), discarding their energy.
++                                 The tau_es~100 photon-tired winds need ~50k scatters per
++                                 photon to escape, so the upstream default of 2000 silently
++                                 destroys ~94% of the luminosity. Check the diagnostic
++                                 "luminosity lost by too many scatters" is 0 on thick winds.
++                                 */
+ 
+ /* Define the structures */
+ #include "math_struc.h"
+-- 
+2.43.7
+

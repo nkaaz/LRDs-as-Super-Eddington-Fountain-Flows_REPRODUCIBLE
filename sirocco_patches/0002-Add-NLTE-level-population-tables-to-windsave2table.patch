@@ -1,0 +1,231 @@
+From ba976b11a74771a8d6c0542a71321e74c5eb36bb Mon Sep 17 00:00:00 2001
+From: Nick Kaaz <nk6352@stellar-intel.princeton.edu>
+Date: Fri, 24 Apr 2026 11:32:56 -0400
+Subject: [PATCH 2/6] Add NLTE level population tables to windsave2table
+
+Writes rootname.<Element>_<istate>.levden.txt for H I, He I, He II.
+Columns: r i inwind ion_den lev1 lev2 ...levN, where lev* are
+fractional populations (multiply by ion_den for absolute cm^-3).
+Enables plotting atomic level populations (e.g., n=1, n=2 of H I)
+needed for Balmer break and other NLTE diagnostics.
+
+Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
+---
+ source/windsave2table_sub.c | 189 ++++++++++++++++++++++++++++++++++++
+ 1 file changed, 189 insertions(+)
+
+diff --git a/source/windsave2table_sub.c b/source/windsave2table_sub.c
+index 0378d0a1..8d5ba9c4 100644
+--- a/source/windsave2table_sub.c
++++ b/source/windsave2table_sub.c
+@@ -24,6 +24,7 @@
+ #include "sirocco.h"
+ 
+ int xedge = FALSE;
++int create_level_table (int ndom, char rootname[], int iz, int istate);
+ 
+ 
+ /**********************************************************/
+@@ -78,6 +79,9 @@ do_windsave2table (root, ion_switch, edge_switch)
+     create_convergence_table (ndom, rootname);
+     create_velocity_gradient_table (ndom, rootname);
+     create_spec_table (ndom, rootname);
++    create_level_table (ndom, rootname, 1, 1);  /* H I level populations */
++    create_level_table (ndom, rootname, 2, 1);  /* He I level populations */
++    create_level_table (ndom, rootname, 2, 2);  /* He II level populations */
+ 
+     if (ion_switch != 99)
+     {
+@@ -2179,4 +2183,189 @@ create_big_detailed_spec_table (ndom, rootname)
+ 
+ 
+ 
++}
++
++
++/**********************************************************/
++/**
++ * @brief      Write a table of NLTE level populations for a specific ion
++ *
++ * @param [in] int  ndom        The domain number
++ * @param [in] char rootname[]  The rootname for output files
++ * @param [in] int  iz          The atomic number (e.g., 1 for H, 2 for He)
++ * @param [in] int  istate      The ionization state (e.g., 1 for neutral)
++ * @return     0 on success, -1 if ion not found or has no NLTE levels
++ *
++ * @details
++ *
++ * Writes an ascii table with the fractional level populations (levden)
++ * for each NLTE level of the specified ion.  The output values are
++ * fractional populations: multiply by the ion number density (ion_den
++ * column) to get absolute number densities.
++ *
++ * The output filename is rootname.Element_Ion.levden.txt
++ * (e.g., outflow.H_1.levden.txt for H I).
++ *
++ **********************************************************/
++
++int
++create_level_table (ndom, rootname, iz, istate)
++     int ndom;
++     char rootname[];
++     int iz;
++     int istate;
++{
++  char filename[LINELENGTH];
++  char one_line[4096], start[1024], one_value[20];
++  int nstart, ndim2;
++  int nion, nlev, first_lev;
++  int i, ii, jj, n, nplasma;
++  FILE *fptr;
++  char element_name[20];
++  int ielem;
++
++  /* Find the element name */
++  ielem = 0;
++  while (ielem < nelements)
++  {
++    if (ele[ielem].z == iz)
++      break;
++    ielem++;
++  }
++  if (ielem == nelements)
++  {
++    Log ("create_level_table: element z=%d not found\n", iz);
++    return (-1);
++  }
++  strcpy (element_name, ele[ielem].name);
++
++  /* Find the ion */
++  nion = 0;
++  while (nion < nions && !(ion[nion].z == iz && ion[nion].istate == istate))
++    nion++;
++  if (nion == nions)
++  {
++    Log ("create_level_table: ion z=%d istate=%d not found\n", iz, istate);
++    return (-1);
++  }
++
++  nlev = ion[nion].nlte;
++  first_lev = ion[nion].first_nlte_level;
++
++  if (nlev <= 0 || first_lev < 0)
++  {
++    Log ("create_level_table: ion z=%d istate=%d has no NLTE levels\n", iz, istate);
++    return (-1);
++  }
++
++  /* Open the output file */
++  sprintf (filename, "%.100s.%.10s_%d.levden.txt", rootname, element_name, istate);
++  fptr = fopen (filename, "w");
++  if (fptr == NULL)
++  {
++    Error ("create_level_table: could not open %s\n", filename);
++    return (-1);
++  }
++
++  nstart = zdom[ndom].nstart;
++  ndim2 = zdom[ndom].ndim2;
++
++  if (zdom[ndom].coord_type == SPHERICAL)
++  {
++    /* Header */
++    sprintf (start, "%8s %4s %6s %12s ", "r", "i", "inwind", "ion_den");
++    strcpy (one_line, start);
++    for (n = 0; n < nlev; n++)
++    {
++      sprintf (one_value, "  lev%-4d", xconfig[first_lev + n].ilv);
++      strcat (one_line, one_value);
++    }
++    fprintf (fptr, "%s\n", one_line);
++
++    /* Data rows */
++    for (i = 0; i < ndim2; i++)
++    {
++      nplasma = wmain[nstart + i].nplasma;
++      sprintf (start, "%8.2e %4d %6d ", wmain[nstart + i].r, i, wmain[nstart + i].inwind);
++      strcpy (one_line, start);
++
++      if (wmain[nstart + i].inwind >= 0 && plasmamain[nplasma].rho > 0.0)
++      {
++        sprintf (one_value, "%12.4e ", plasmamain[nplasma].density[nion]);
++        strcat (one_line, one_value);
++        for (n = 0; n < nlev; n++)
++        {
++          int nden = xconfig[first_lev + n].nden;
++          if (nden >= 0)
++            sprintf (one_value, "%8.2e ", plasmamain[nplasma].levden[nden]);
++          else
++            sprintf (one_value, "%8.2e ", 0.0);
++          strcat (one_line, one_value);
++        }
++      }
++      else
++      {
++        sprintf (one_value, "%12.4e ", 0.0);
++        strcat (one_line, one_value);
++        for (n = 0; n < nlev; n++)
++        {
++          sprintf (one_value, "%8.2e ", 0.0);
++          strcat (one_line, one_value);
++        }
++      }
++      fprintf (fptr, "%s\n", one_line);
++    }
++  }
++  else
++  {
++    /* 2D header */
++    sprintf (start, "%8s %8s %4s %4s %6s %12s ", "x", "z", "i", "j", "inwind", "ion_den");
++    strcpy (one_line, start);
++    for (n = 0; n < nlev; n++)
++    {
++      sprintf (one_value, "  lev%-4d", xconfig[first_lev + n].ilv);
++      strcat (one_line, one_value);
++    }
++    fprintf (fptr, "%s\n", one_line);
++
++    /* Data rows */
++    for (i = 0; i < ndim2; i++)
++    {
++      nplasma = wmain[nstart + i].nplasma;
++      wind_n_to_ij (ndom, nstart + i, &ii, &jj);
++      sprintf (start, "%8.2e %8.2e %4d %4d %6d ",
++               wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii, jj, wmain[nstart + i].inwind);
++      strcpy (one_line, start);
++
++      if (wmain[nstart + i].inwind >= 0 && plasmamain[nplasma].rho > 0.0)
++      {
++        sprintf (one_value, "%12.4e ", plasmamain[nplasma].density[nion]);
++        strcat (one_line, one_value);
++        for (n = 0; n < nlev; n++)
++        {
++          int nden = xconfig[first_lev + n].nden;
++          if (nden >= 0)
++            sprintf (one_value, "%8.2e ", plasmamain[nplasma].levden[nden]);
++          else
++            sprintf (one_value, "%8.2e ", 0.0);
++          strcat (one_line, one_value);
++        }
++      }
++      else
++      {
++        sprintf (one_value, "%12.4e ", 0.0);
++        strcat (one_line, one_value);
++        for (n = 0; n < nlev; n++)
++        {
++          sprintf (one_value, "%8.2e ", 0.0);
++          strcat (one_line, one_value);
++        }
++      }
++      fprintf (fptr, "%s\n", one_line);
++    }
++  }
++
++  fclose (fptr);
++  Log ("Saved level populations for %s %d in %s\n", element_name, istate, filename);
++  return (0);
+ }
+-- 
+2.43.7
+

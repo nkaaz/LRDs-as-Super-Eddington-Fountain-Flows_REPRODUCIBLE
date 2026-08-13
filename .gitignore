@@ -1,1 +1,18 @@
-runs/
+__pycache__/
+.ipynb_checkpoints/
+# run OUTPUTS stay out of git (configs are tracked; heavy products go to Zenodo)
+runs/**/diag_*/
+runs/**/*.wind_save
+runs/**/*.spec_save
+runs/**/*.spec
+runs/**/*.log_spec*
+runs/**/*.spec_wind
+runs/**/slurm-*.out
+runs/**/outflow.log
+runs/**/spec.log
+runs/**/logfile
+runs/**/cdf_diag.txt
+runs/**/*.sig
+runs/**/*.out.pf
+runs/**/data
+runs/**/zdata

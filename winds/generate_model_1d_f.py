@@ -45,7 +45,7 @@ SIROCCO_OUT.mkdir(exist_ok=True)
 F_SET     = [0.60, 0.90, 0.94]
 N_CELLS   = 100
 T_E_WIND  = 10000.0
-Mdot_grid = [2.5, 5.0, 10.0, 20.0]   # M☉/yr
+Mdot_grid = [2.5, 5.0, 10.0, 15.0, 20.0]   # M☉/yr
 
 
 def load_dimensionless(npz_path):

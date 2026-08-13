@@ -21,9 +21,12 @@ the governing equations.
 
 ## Layout
 
-    winds/       solver (submodule), generation scripts, and all wind data
-    analysis/    figure notebook(s)
-    figures/     rendered paper figures
+    winds/             solver (submodule), generation scripts, and all wind data
+    runs/              Sirocco run configurations (.pf, wind import, .slurm record) — one dir per model
+    sirocco_patches/   the six patches that turn stock Sirocco (5aef5f17) into the code used here
+    analysis/          figure notebooks (one per paper figure; see manifest below)
+    figures/           rendered paper figures (PDF)
+    ENVIRONMENT.md     how to build the patched Sirocco, run the models, and post-process them
 
 ## Model setup
 
@@ -85,7 +88,7 @@ to 10× the τ_es = 1 photosphere, with one inner ghost cell at T_core.
 ## Reproducing everything from scratch
 
 ```bash
-pip install -r requirements.txt
+pip install -r winds/requirements.txt   # (+ analysis/requirements.txt for the notebooks)
 
 # Layer 1: dimensionless solutions (minutes; f=0.94 is the slow one)
 cd winds
@@ -114,4 +117,73 @@ this; `requirements.txt` records the exact versions used
 `analysis/FigPhotonTiredAndMBProfiles.ipynb` reads `winds/runs_f/models/` and produces the
 stacked velocity/density figure (photon-tired winds at f = 0.94, 0.90, 0.60
 with τ_es = 1 photosphere markers, plus analytic marginally-unbound
-profiles). Pre-rendered copies are in `figures/`.
+profiles). It writes `figures/FigPhotonTiredAndMBProfiles.{png,pdf}`; the
+tracked copy carries the historical name `FigPhotonTiredAndMBProfilesTiring.pdf`.
+Pre-rendered **PDF** copies of all figures are in `figures/` (PNGs are not
+tracked).
+
+---
+
+# Radiative-transfer layer (Sirocco): `runs/`, `analysis/`, `figures/`
+
+Everything below this line concerns the Monte-Carlo radiative-transfer models
+that produce the paper's spectra and wind diagnostics. The code is **not stock
+Sirocco** — see `ENVIRONMENT.md` for building the patched version
+(`sirocco_patches/`), running the models, and generating the post-processing
+tables the notebooks read.
+
+## Wind families and naming
+
+Three naming schemes coexist (run-config dirs, notebook dictionary keys, and
+the data directories on the authors' cluster / in the archived data):
+
+| physical family | `runs/` dir | notebook keys | data dir (under `$SIROCCO_REPRO_DATA/repro/`) |
+|---|---|---|---|
+| marginally unbound (v = v_esc, "dilute_redd") | `mu_m*` | `mu_m*`, `MU_m*`, or bare `m*` | `mu_m*` |
+| photon-tired, f = 0.94 (Γ₀ = 1.2128) — **the paper's photon-tired family** | `ptf_m*` | `pt_m*` / `PT_m*` (historical key names) | `ptf_m*` |
+| photon-tired, Γ₀ = 1.375 (g1.38) — **superseded** | `pt_m*` | — (not used by any notebook) | — |
+
+⚠ The trap: notebook keys named `pt_m*` point at `ptf_m*` data — they do
+**not** correspond to the `runs/pt_m*` dirs, which are the superseded Γ₀=1.375
+family retained for provenance only.
+
+`*_trunc_speconly` dirs are spectrum-only reruns on truncated winds and
+`halpha_hires/` subdirs are narrow-band Hα reruns — both documented in
+`ENVIRONMENT.md`. The `*_m15` dirs (both families) are exploratory
+intermediate-Ṁ runs, **not currently used in the paper**; their role will be
+decided when they complete.
+
+## Data location: two environment variables
+
+The eight Sirocco notebooks read post-processing tables and spectra that are
+**not in this repo** (they will be archived on Zenodo; DOI to be added):
+
+```bash
+export SIROCCO_REPRO_DATA=/path/to/data      # dir containing repro/<run-name>/
+export SIROCCO_REPRO_RUNSET=repro            # default; "legacy" = paper-freeze layout
+```
+
+Each notebook's first code cell has a `# ==== config ====` block with the
+run-name map (`RUN_DIRS_REPRO`) — that map is the authoritative record of
+which run feeds which panel.
+
+## Figure manifest
+
+| notebook | figure file(s) | families | data files read per run |
+|---|---|---|---|
+| `Fig_LRD_gallery.ipynb` | `Fig_LRD_gallery` | mu + ptf (8 panels) | `outflow.log_spec` / `spec.log_spec` |
+| `Fig_LRD_halpha.ipynb` | `Fig_LRD_halpha` | mu + ptf (8 panels) | `log_spec` + `halpha_hires/outflow.log_spec` |
+| `FigHeatCool.ipynb` | `FigHeatCool` | mu + ptf | `outflow.heat.txt`, `outflow.xspec.all.txt` |
+| `FigHeatCool_TeXi.ipynb` | `FigHeatCool_TeXi` | mu + ptf | `outflow.heat.txt`, `outflow.master.txt` |
+| `FigHaHbNetEmission.ipynb` | `FigHaHbNetEmission` | mu + ptf | `outflow.master.txt`, `outflow.H_1.levden.txt` |
+| `FigTemp_n2_grid.ipynb` | `FigTemp_n2_grid` | mu + ptf | `master`, `H_1.levden`, `xspec.all` |
+| `FigGamma1.ipynb` | `FigGamma1` | mu only (by design) | `master`, `H_1.levden`, `xspec.all` |
+| `FigOpticalDepth.ipynb` | `FigOpticalDepth` | mu only (by design) | `master`, `H_1.levden`, `xspec.all` |
+| `FigPhotonTiredAndMBProfiles.ipynb` | `FigPhotonTiredAndMBProfiles` | (analytic; `winds/` only — runs without Sirocco data) | `winds/runs_f/models/*.npz` |
+
+**Provisional caveat:** which spectra the photon-tired m10/m20 panels use
+(full-domain parent vs truncated rerun) is still under review pending the m15
+runs; the `RUN_DIRS_REPRO` maps in the two spectra notebooks reflect the
+current working choice and may change before submission. Flux blueward of the
+Balmer edge in the m20-class panels depends on the unconverged outer wind and
+is rendered grey (not a robust model prediction; see `ENVIRONMENT.md`).
