@@ -48,8 +48,9 @@ Each `runs/<name>/` contains the complete input set: `outflow.pf`,
 `outflow.import.txt` (the 1-D spherical wind model; see `winds/` for how these
 are generated), and the `.slurm` record. Run dirs need `data` and `zdata`
 symlinks to the Sirocco `xdata`/`zdata` directories. Production settings:
-2×10⁶ photons/cycle, `matrix_pow` ionization, `wide` photon sampling,
-macro-atom H/He + simple-atom metals, 14 ionization + 20 (mu) or 40 (ptf)
+2×10⁶ photons/cycle, `matrix_pow` ionization, photon sampling `user_bands`
+(5 bands, 0.05–100 eV, boundaries 1.5/3.4/7/13.6 eV) for the mu family and
+`wide` for the ptf family, macro-atom H/He + simple-atom metals, 14 ionization + 20 (mu) or 40 (ptf)
 spectrum cycles; 384 MPI ranks at 4 GB each (4 nodes) for 100-cell runs, or
 192 ranks at 8 GB for the 300-cell run (matrix-mode memory scales with cell
 count: ~1.8 GB/rank at 100 cells, ~5.4 at 300). Use `-p` (logarithmic photon ramp-up)
