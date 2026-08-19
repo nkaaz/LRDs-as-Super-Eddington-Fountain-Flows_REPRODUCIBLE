@@ -3,10 +3,10 @@ Wind.old_windfile(root_only)               cut
 
 ### Parameters for the Central Object
 Central_object.mass(msol)                  1e6
-Central_object.radius(cm)                  1.4153e+16
+Central_object.radius(cm)                  2.5087e+16
 Central_object.radiation(yes,no)                  yes
 Central_object.rad_type_to_make_wind(bb,models)                   bb
-Central_object.temp                        18803
+Central_object.temp                        14123
 Central_object.dilution_factor             0.010000
 
 ### Parameters for the Disk (if there is one)
@@ -25,7 +25,7 @@ Wind.model2import                          outflow.import.txt
 ### Parameters associated with photon number, cycles,ionization and radiative transfer options
 Photons_per_cycle                          2000000
 Ionization_cycles                          0
-Spectrum_cycles                            400
+Spectrum_cycles                            20
 Wind.ionization(on.the.spot,ML93,LTE_tr,LTE_te,fixed,matrix_bb,matrix_pow)           matrix_pow
 Line_transfer(pure_abs,pure_scat,sing_scat,escape_prob,thermal_trapping,macro_atoms,macro_atoms_thermal_trapping) macro_atoms_thermal_trapping
 Matom_transition_mode(mc_jumps,matrix)               matrix
@@ -34,7 +34,7 @@ Surface.reflection.or.absorption(reflect,absorb,thermalized.rerad)              
 Wind_heating.extra_processes(none,adiabatic,nonthermal,both)            adiabatic
 
 ### Parameters for Domain 0
-Wind.radmax(cm)                            1.1168e+19
+Wind.radmax(cm)                            2.0505e+19
 Wind.t.init                                10000
 Wind.filling_factor(1=smooth,<1=clumped)   1
 
@@ -42,9 +42,9 @@ Wind.filling_factor(1=smooth,<1=clumped)   1
 Central_object.rad_type_in_final_spectrum(bb,models,uniform)                   bb
 
 ### The minimum and maximum wavelengths in the final spectra
-Spectrum.nwave                    200000
-Spectrum.wavemin(Angstroms)                200
-Spectrum.wavemax(Angstroms)                20000
+Spectrum.nwave                             10000
+Spectrum.wavemin(Angstroms)                6500
+Spectrum.wavemax(Angstroms)                6700
 
 ### The observers and their location relative to the system
 Spectrum.no_observers                      1

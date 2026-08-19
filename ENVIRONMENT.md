@@ -49,8 +49,10 @@ Each `runs/<name>/` contains the complete input set: `outflow.pf`,
 are generated), and the `.slurm` record. Run dirs need `data` and `zdata`
 symlinks to the Sirocco `xdata`/`zdata` directories. Production settings:
 2×10⁶ photons/cycle, `matrix_pow` ionization, `wide` photon sampling,
-macro-atom H/He + simple-atom metals, 384 MPI ranks (4 nodes), 14 ionization
-+ 20 (mu) or 40 (ptf) spectrum cycles. Use `-p` (logarithmic photon ramp-up)
+macro-atom H/He + simple-atom metals, 14 ionization + 20 (mu) or 40 (ptf)
+spectrum cycles; 384 MPI ranks at 4 GB each (4 nodes) for 100-cell runs, or
+192 ranks at 8 GB for the 300-cell run (matrix-mode memory scales with cell
+count: ~1.8 GB/rank at 100 cells, ~5.4 at 300). Use `-p` (logarithmic photon ramp-up)
 for fresh runs only — never for `System_type=previous` restarts.
 
 ## Post-processing products the notebooks read
@@ -84,19 +86,50 @@ modify_wind -rcut <RCUT_CM> -out_root cut full     # floors ρ, n_e beyond RCUT
 # Ionization_cycles=0 (see runs/ptf_m*_trunc_speconly/)
 ```
 
-RCUT is 1.35× the recombination front radius of the converged parent
-(hand-checked against the per-cell convergence pattern):
+RCUT is set at the outer edge of the contiguously converged core, read
+per run from the cell convergence pattern (single-cell interior blips are
+tolerated; for ptf_m10 the boundary coincides with 1.35× the hydrogen
+recombination front):
 
-| run | recomb front | RCUT | cells kept |
+| run | RCUT | criterion | cells kept |
 |---|---|---|---|
-| ptf_m10 | 3.05e17 cm (cell 47) | 4.111e17 cm | 0–49 of 99 |
-| ptf_m20 | 4.4e17 cm (cell 36) | 5.958e17 cm | 0–40 of 99 |
+| mu_m15 | 8.509e18 cm | converged-core end (sustained tail from cell 76) | 0–75 of 99 |
+| ptf_m15_n300 | 5.245e17 cm | converged-core end (sustained tail from cell 137); keeps the whole recombination front (r = 3.59e17) | 0–136 of 299 |
+| ptf_m10 | 4.111e17 cm | 1.35× the recombination front (cell 47, r = 3.05e17) | 0–49 of 99 |
 
-Validation: the truncation changes the Balmer-red and NIR spectrum by ≤3%
-(Hα ≤4%); everything blueward of the Balmer edge depends on the unconverged
-outer wind in *both* treatments (parent and truncated disagree by 1–4 dex
-there) and is not a robust prediction of these models — the gallery figure
-renders that region grey.
+Truncation sensitivity (quantified in `FigAppTruncatedSpectraComparison`):
+for mu_m15, whose cut sits essentially at its electron-scattering photosphere
+(0.83 r_ph), the truncated and full-domain spectra agree closely redward of
+the Balmer edge; for the photon-tired runs, whose cuts sit inside their
+photospheres (0.26–0.37 r_ph), the removed unconverged tail absorbs up to
+~half the optical, so the truncated (converged-cells-only) spectrum is the
+production statement. Everything blueward of the Balmer edge depends on the
+unconverged outer wind in *both* treatments (they disagree by 1–4 dex there)
+and is not a robust prediction of these models.
+
+## Radial resolution
+
+The photon-tired Ṁ = 15 model is run on a **300-cell** radial grid
+(`ptf_m15_n300`; import generated with `N_CELLS = 300` in
+`winds/generate_model_1d_f.py`). At the standard 100 cells this run's
+hydrogen-recombination front never converges: it executes a bounded limit
+cycle (front radius sloshing between 3.0 and 3.9e17 cm, converged-cell count
+oscillating, emergent Hα varying by ×4 between snapshots). The cause is
+numerical — the front cells are internally optically thick to the Balmer
+continuum that mediates the front's feedback (τ_BaC ≈ 34 per cell at 100
+cells), and neither more photons (the front cells receive 4–14 × 10⁶
+photons/cycle; estimator noise 0.03–0.05%) nor more ionization cycles changes
+it. At 300 cells (τ_BaC ≈ 11 per cell) the front converges monotonically and
+sits at the mean of the 100-cell oscillation. All other runs (both families)
+are steady at 100 cells; their spectra are unaffected by this choice.
+
+## Restarts used in production
+
+`runs/mu_m15/outflow.restart.slurm` records the spectrum-only `-r` restart
+that completed mu_m15's spectrum cycles 11–20 after a walltime timeout (in
+`-r` mode `Spectrum_cycles` is the cumulative total). Truncated reruns and
+`halpha_hires` runs use `System_type=previous` (cycle counts are NEW cycles
+in that mode) and never the `-p` photon ramp-up.
 
 ## Hα line profiles (`halpha_hires/`)
 

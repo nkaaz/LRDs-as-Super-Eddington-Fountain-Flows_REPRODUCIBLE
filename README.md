@@ -75,15 +75,18 @@ f → 1 needs a matched asymptotic treatment, not more resolution).
 ### 2. `winds/runs_f/models/f{F}_Mdot{X}.npz` — physical profiles (`winds/generate_model_1d_f.py`)
 
 Dimensionalized profiles for f ∈ {0.60, 0.90, 0.94} ×
-Ṁ ∈ {2.5, 5, 10, 20} M☉/yr: CGS arrays `r, v, rho, tau` (Thomson depth)
+Ṁ ∈ {2.5, 5, 10, 15, 20} M☉/yr: CGS arrays `r, v, rho, tau` (Thomson depth)
 plus all scalars (R, v_esc, L₀, τ★, τ_base, …).
 
 ### 3. `winds/sirocco_imports_f/outflow_f{F}_Mdot{X}.import.txt` — Sirocco inputs
 
 The same models as 1-D spherical imports for the Sirocco radiative-transfer
-code: columns (i, r [cm], v_r [cm/s], ρ [g/cm³], T_e [K]) on a 100-cell log
-grid from r_in (τ_es = 100 surface, or R where the base is more transparent)
-to 10× the τ_es = 1 photosphere, with one inner ghost cell at T_core.
+code: columns (i, r [cm], v_r [cm/s], ρ [g/cm³], T_e [K]) on a log grid
+(100 cells; 300 for the production f = 0.94, Ṁ = 15 import — set `N_CELLS`
+in `generate_model_1d_f.py`; see `ENVIRONMENT.md`, "Radial resolution") from
+r_in (τ_es = 100 surface, or R where the base is more transparent) to 10× the
+τ_es = 1 photosphere, with one inner ghost cell at T_core. The analogous
+marginally-unbound imports come from `winds/generate_model_1d_mu.py`.
 
 ## Reproducing everything from scratch
 
@@ -97,7 +100,7 @@ python solve_f_grid.py 0.60 0.75 0.85 0.90 0.94
 # Layers 2+3: physical models + Sirocco imports
 python generate_model_1d_f.py
 
-# Paper figure (figures/FigPhotonTiredAndMBProfilesTiring.{png,pdf})
+# Paper figure (figures/FigPhotonTiredAndMBProfiles.{png,pdf})
 cd ../analysis
 jupyter nbconvert --to notebook --execute --inplace FigPhotonTiredAndMBProfiles.ipynb
 ```
@@ -117,8 +120,7 @@ this; `requirements.txt` records the exact versions used
 `analysis/FigPhotonTiredAndMBProfiles.ipynb` reads `winds/runs_f/models/` and produces the
 stacked velocity/density figure (photon-tired winds at f = 0.94, 0.90, 0.60
 with τ_es = 1 photosphere markers, plus analytic marginally-unbound
-profiles). It writes `figures/FigPhotonTiredAndMBProfiles.{png,pdf}`; the
-tracked copy carries the historical name `FigPhotonTiredAndMBProfilesTiring.pdf`.
+profiles) as `figures/FigPhotonTiredAndMBProfiles.{png,pdf}`.
 Pre-rendered **PDF** copies of all figures are in `figures/` (PNGs are not
 tracked).
 
@@ -134,28 +136,27 @@ tables the notebooks read.
 
 ## Wind families and naming
 
-Three naming schemes coexist (run-config dirs, notebook dictionary keys, and
-the data directories on the authors' cluster / in the archived data):
+Two wind families, four mass-loss rates each (Ṁ = 2.5, 5, 10, 15 M☉/yr):
 
-| physical family | `runs/` dir | notebook keys | data dir (under `$SIROCCO_REPRO_DATA/repro/`) |
+| physical family | `runs/` dirs | notebook keys | data dir (under `$SIROCCO_REPRO_DATA/repro/`) |
 |---|---|---|---|
-| marginally unbound (v = v_esc, "dilute_redd") | `mu_m*` | `mu_m*`, `MU_m*`, or bare `m*` | `mu_m*` |
-| photon-tired, f = 0.94 (Γ₀ = 1.2128) — **the paper's photon-tired family** | `ptf_m*` | `pt_m*` / `PT_m*` (historical key names) | `ptf_m*` |
-| photon-tired, Γ₀ = 1.375 (g1.38) — **superseded** | `pt_m*` | — (not used by any notebook) | — |
+| marginally unbound (v = v_esc, "dilute_redd") | `mu_m*` | `mu_m*`, `MU_m*`, or bare `m*` | same names |
+| photon-tired, f = 0.94 (Γ₀ = 1.2128) | `ptf_m*` | `pt_m*` / `PT_m*` | same names |
 
-⚠ The trap: notebook keys named `pt_m*` point at `ptf_m*` data — they do
-**not** correspond to the `runs/pt_m*` dirs, which are the superseded Γ₀=1.375
-family retained for provenance only.
+The photon-tired Ṁ = 15 run is `ptf_m15_n300`: it uses a 300-cell radial grid
+because at the standard 100 cells its hydrogen-recombination front does not
+converge (a grid-resolution limit cycle; see `ENVIRONMENT.md`, "Radial
+resolution"). All other runs use 100 cells, verified steady.
 
-`*_trunc_speconly` dirs are spectrum-only reruns on truncated winds and
-`halpha_hires/` subdirs are narrow-band Hα reruns — both documented in
-`ENVIRONMENT.md`. The `*_m15` dirs (both families) are exploratory
-intermediate-Ṁ runs, **not currently used in the paper**; their role will be
-decided when they complete.
+`*_trunc_speconly` dirs are spectrum-only reruns on truncated winds (the
+production source for all emergent spectra) and `halpha_hires/` subdirs are
+narrow-band Hα reruns — both documented in `ENVIRONMENT.md`. `runs/mu_m15/`
+also carries `outflow.restart.slurm`, the `-r` spectrum restart that completed
+its 20 spectrum cycles after a walltime timeout.
 
 ## Data location: two environment variables
 
-The eight Sirocco notebooks read post-processing tables and spectra that are
+The nine Sirocco notebooks read post-processing tables and spectra that are
 **not in this repo** (they will be archived on Zenodo; DOI to be added):
 
 ```bash
@@ -180,10 +181,12 @@ which run feeds which panel.
 | `FigGamma1.ipynb` | `FigGamma1` | mu only (by design) | `master`, `H_1.levden`, `xspec.all` |
 | `FigOpticalDepth.ipynb` | `FigOpticalDepth` | mu only (by design) | `master`, `H_1.levden`, `xspec.all` |
 | `FigPhotonTiredAndMBProfiles.ipynb` | `FigPhotonTiredAndMBProfiles` | (analytic; `winds/` only — runs without Sirocco data) | `winds/runs_f/models/*.npz` |
+| `FigAppTruncatedSpectraComparison.ipynb` | `FigAppTruncatedSpectraComparison` | mu_m15 + ptf_m15, truncated vs full domain | `log_spec` (+ `halpha_hires`) of both treatments |
 
-**Provisional caveat:** which spectra the photon-tired m10/m20 panels use
-(full-domain parent vs truncated rerun) is still under review pending the m15
-runs; the `RUN_DIRS_REPRO` maps in the two spectra notebooks reflect the
-current working choice and may change before submission. Flux blueward of the
-Balmer edge in the m20-class panels depends on the unconverged outer wind and
-is rendered grey (not a robust model prediction; see `ENVIRONMENT.md`).
+**Truncation policy:** the two spectra figures read the truncated
+(converged-cells-only) reruns for mu_m15, ptf_m10 and ptf_m15; flux blueward
+of the Balmer edge depends on the unconverged outer wind (full-domain and
+truncated treatments disagree there by orders of magnitude) and is not a
+robust prediction of these models. `FigAppTruncatedSpectraComparison.ipynb`
+quantifies this: redward of the Balmer edge the two treatments agree to
+better than a factor ~2; blueward they diverge.

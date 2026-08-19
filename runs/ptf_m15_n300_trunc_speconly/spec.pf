@@ -3,10 +3,10 @@ Wind.old_windfile(root_only)               cut
 
 ### Parameters for the Central Object
 Central_object.mass(msol)                  1e6
-Central_object.radius(cm)                  1.4153e+16
+Central_object.radius(cm)                  2.5087e+16
 Central_object.radiation(yes,no)                  yes
 Central_object.rad_type_to_make_wind(bb,models)                   bb
-Central_object.temp                        18803
+Central_object.temp                        14123
 Central_object.dilution_factor             0.010000
 
 ### Parameters for the Disk (if there is one)
@@ -34,7 +34,7 @@ Surface.reflection.or.absorption(reflect,absorb,thermalized.rerad)              
 Wind_heating.extra_processes(none,adiabatic,nonthermal,both)            adiabatic
 
 ### Parameters for Domain 0
-Wind.radmax(cm)                            1.1168e+19
+Wind.radmax(cm)                            2.0505e+19
 Wind.t.init                                10000
 Wind.filling_factor(1=smooth,<1=clumped)   1
 
