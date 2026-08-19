@@ -14,10 +14,9 @@ module load gcc-toolset/13 openmpi/gcc/4.1.6 gsl/2.6
 export SIROCCO=/home/nk6352/sirocco/sirocco
 export PATH=$SIROCCO/bin:$PATH
 
-# Spectrum-only extraction from the CONVERGED CORE of ptf_m15_n300 (the resolved-front
-# 300-cell run). rcut=5.245e17 = start of the sustained unconverged tail (cell 137);
-# keeps the entire steady recombination front (cell 120, r=3.59e17) and its converged
-# wake; interior single-cell blips retained per convention. 400 spectrum cycles.
-# 48 ranks/node x 8G for the 300-cell plasma arrays. No -p, no -r.
+# Halpha-only (6500-6700 A, 10^4 bins) spectrum extraction from the truncated
+# (converged-core) wind of ptf_m15_n300: System_type=previous reads cut.wind_save
+# (copy it here from the trunc dir). 20 spectrum cycles; all photons generated
+# in-band. No -p, no -r.
 cd /scratch/gpfs/nk6352/sirocco_runs/repro/ptf_m15_n300_trunc_speconly/halpha_hires
 srun sirocco outflow.pf 2>&1 | tee outflow.log

@@ -129,7 +129,8 @@ def process(sc, x, w, tau_dimless, Mdot_Msun):
     r_all      = np.concatenate([[r_ghost_in], r_edges])
     r_centers  = np.sqrt(r_all[:-1] * r_all[1:])
 
-    outfile = SIROCCO_OUT / f'outflow_f{f:.2f}_Mdot{Mdot_Msun:.1f}.import.txt'
+    suffix = '' if N_CELLS == 100 else f'_n{N_CELLS}'
+    outfile = SIROCCO_OUT / f'outflow_f{f:.2f}_Mdot{Mdot_Msun:.1f}{suffix}.import.txt'
     with outfile.open('w') as fh:
         fh.write(f"# 1D spherical import for Sirocco — Owocki+2017 super-Eddington wind\n")
         fh.write(f"# f=m/m_max={f}, Γ₀={Gamma_0:.6f}, m={sc['m']:.6f}, "
@@ -149,12 +150,26 @@ def process(sc, x, w, tau_dimless, Mdot_Msun):
             fh.write(f"{i}  {r_all[i]:.8e}  {vr(r_all[i]):.8e}  "
                      f"{rho_of(r_c):.8e}  {t_e:.1f}\n")
 
+    # Sirocco central-source parameters implied by this import (diluted interior
+    # field at the injection surface: W = 1/tau_es(r_in), T_color = T_core * tau_in^(1/4)):
+    tau_in  = min(100.0, tau_base)
+    T_color = T_core * tau_in ** 0.25
+    print(f"           pf: Central_object.radius={r_in:.4e}  temp={T_color:.0f}  "
+          f"dilution_factor={1.0/tau_in:.6f}  Wind.radmax={r_out:.4e}")
     return dict(model=model_file.name, sirocco=outfile.name, R=R,
                 tau_base=tau_base, r_in=r_in, r_ph=r_ph, r_out=r_out,
-                T_core=T_core, v_in=vr(r_in), v_ph=vr(r_ph))
+                T_core=T_core, T_color=T_color, W=1.0/tau_in,
+                v_in=vr(r_in), v_ph=vr(r_ph))
 
 
 def main():
+    # usage: python generate_model_1d_f.py [--ncells N]
+    # --ncells N regenerates the grid at N radial cells; outputs get an _nN
+    # filename suffix so the 100-cell production files are never overwritten.
+    global N_CELLS
+    import sys
+    if '--ncells' in sys.argv:
+        N_CELLS = int(sys.argv[sys.argv.index('--ncells') + 1])
     for F in F_SET:
         run = RUNS / f"f{F:.2f}.npz"
         sc, x, w, tau_dimless = load_dimensionless(run)

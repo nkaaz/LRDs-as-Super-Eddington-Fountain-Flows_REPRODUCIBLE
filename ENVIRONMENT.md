@@ -39,7 +39,7 @@ wall-times), not as portable submission scripts.
 | 0002 | levden tables in `windsave2table` | Writes `rootname.<Elem>_<istate>.levden.txt` (NLTE level populations). Four notebooks (`FigGamma1`, `FigHaHbNetEmission`, `FigOpticalDepth`, `FigTemp_n2_grid`) read `outflow.H_1.levden.txt` — the n=2 populations behind the Balmer-break analysis. |
 | 0003 | `NBINS_IN_CELL_SPEC` 1000→3000 | Per-cell J_ν resolution of `windsave2table -xall` (the `outflow.xspec.all.txt` files the notebooks read have 3001 rows). |
 | 0004 | `MAXSCAT` 2000→200000 | **Critical.** These winds have τ_es(base) up to ~100; photons legitimately scatter tens of thousands of times. With the stock cap of 2000, ~80% of in-flight photons are silently destroyed and the photon-tired spectra come out ~20× too faint. |
-| 0005 | `xdata/h20_hetop_standard80_z0.1.dat` | The 10%-metallicity atomic dataset every `.pf` references (`Atomic_data data/h20_hetop_standard80_z0.1.dat`). Recipe (also in the commit message): copy `h20_hetop_standard80` masterfile chain and scale every `Element` line with z ≥ 3 by −1.0 dex (abundances are log-number on the H=12 scale). |
+| 0005 | `xdata/h20_hetop_standard80_z0.1.dat` | The 10%-metallicity atomic dataset every `.pf` references (`Atomic_data data/h20_hetop_standard80_z0.1.dat`). **The dataset itself is shipped in this patch** — no manual step; the commit message documents how it was made (every `Element` line with z ≥ 3 scaled −1.0 dex; abundances are log-number on the H=12 scale). |
 | 0006 | `modify_wind -rcut` | Builds the truncated wind-saves used by the spectrum-only reruns (below). |
 
 ## Running a model
@@ -79,17 +79,24 @@ contaminates the emergent blue/UV. The paper therefore takes those spectra
 from spectrum-only reruns on a truncated wind:
 
 ```bash
-# in the parent run dir, after completion:
-cp outflow.wind_save full.wind_save
-modify_wind -rcut <RCUT_CM> -out_root cut full     # floors ρ, n_e beyond RCUT
-# then run spec.pf: System_type=previous, Wind.old_windfile=cut,
-# Ionization_cycles=0 (see runs/ptf_m*_trunc_speconly/)
+# in the <name>_trunc_speconly dir:
+cp ../<name>/outflow.wind_save full.wind_save
+modify_wind -rcut <RCUT_CM> -out_root cut full     # floors ρ, n_e beyond RCUT -> cut.wind_save
+# then: sbatch spec.slurm  (spec.pf: System_type=previous, Wind.old_windfile=cut,
+# Ionization_cycles=0, Spectrum_cycles=400 — the truncated winds are photon-starved
+# in the optical, so they get 400 spectrum cycles vs the parents' 20/40)
 ```
 
-RCUT is set at the outer edge of the contiguously converged core, read
-per run from the cell convergence pattern (single-cell interior blips are
-tolerated; for ptf_m10 the boundary coincides with 1.35× the hydrogen
-recombination front):
+For a trunc dir's `halpha_hires/` rerun, copy `cut.wind_save` into that
+subdirectory first; for a parent's `halpha_hires/`, copy the parent's
+`outflow.wind_save` instead (its `.pf` reads `Wind.old_windfile outflow`).
+
+RCUT is set at the outer edge of the contiguously converged core:
+run `windsave2table` on the parent, read the `converge` column of
+`outflow.converge.txt` (0 = converged), and place the cut at the first cell
+of the sustained unconverged tail (≥5 consecutive failed cells); isolated
+interior failures (runs of <5 cells) are tolerated. For ptf_m10 this boundary
+coincides with 1.35× the hydrogen recombination front:
 
 | run | RCUT | criterion | cells kept |
 |---|---|---|---|
@@ -144,9 +151,6 @@ in that mode) and never the `-p` photon ramp-up.
 
 The Sirocco *outputs* (wind-saves, spectra, per-cell tables) are not in this
 git repository; they will be archived on Zenodo (DOI to be added here).
-The notebooks locate them via two environment variables (see README):
+The notebooks locate them via one environment variable (see README):
 `SIROCCO_REPRO_DATA` (data root; the run directories live under
-`<root>/repro/<name>` with the same names as `runs/<name>`) and
-`SIROCCO_REPRO_RUNSET` (`repro` = the production runs documented here,
-default; `legacy` = the paper-freeze directory layout on the authors'
-cluster, retained for provenance).
+`<root>/repro/<name>` with the same names as `runs/<name>`).

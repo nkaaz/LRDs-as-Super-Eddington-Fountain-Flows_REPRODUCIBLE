@@ -1,9 +1,10 @@
 # LRDs as Super-Eddington Fountain Flows — wind models (reproducibility package)
 
-Data, generation scripts, and figure notebook for the 1-D super-Eddington
-wind models (Owocki, Townsend & Quataert 2017 formulation) used in the paper.
-The solver itself, `tiring_solver`, is included as a git submodule pinned to
-the exact commit that produced these results.
+Everything needed to reproduce the paper's figures: the wind-model solver
+(pinned git submodule) and generation scripts, the patches that define the
+exact Sirocco radiative-transfer code, all Sirocco run configurations, and one
+notebook per figure. The Sirocco *outputs* the notebooks read are archived on
+Zenodo (DOI below).
 
 ## Getting the code
 
@@ -22,7 +23,7 @@ the governing equations.
 ## Layout
 
     winds/             solver (submodule), generation scripts, and all wind data
-    runs/              Sirocco run configurations (.pf, wind import, .slurm record) — one dir per model
+    runs/              Sirocco run configurations (.pf + .slurm record per run; truncated and halpha_hires reruns as subdirectories)
     sirocco_patches/   the six patches that turn stock Sirocco (5aef5f17) into the code used here
     analysis/          figure notebooks (one per paper figure; see manifest below)
     figures/           rendered paper figures (PDF)
@@ -78,7 +79,7 @@ Dimensionalized profiles for f ∈ {0.60, 0.90, 0.94} ×
 Ṁ ∈ {2.5, 5, 10, 15, 20} M☉/yr: CGS arrays `r, v, rho, tau` (Thomson depth)
 plus all scalars (R, v_esc, L₀, τ★, τ_base, …).
 
-### 3. `winds/sirocco_imports_f/outflow_f{F}_Mdot{X}.import.txt` — Sirocco inputs
+### 3. `winds/sirocco_imports_f/` — Sirocco inputs (regenerated on demand)
 
 The same models as 1-D spherical imports for the Sirocco radiative-transfer
 code: columns (i, r [cm], v_r [cm/s], ρ [g/cm³], T_e [K]) on a log grid
@@ -86,12 +87,21 @@ code: columns (i, r [cm], v_r [cm/s], ρ [g/cm³], T_e [K]) on a log grid
 in `generate_model_1d_f.py`; see `ENVIRONMENT.md`, "Radial resolution") from
 r_in (τ_es = 100 surface, or R where the base is more transparent) to 10× the
 τ_es = 1 photosphere, with one inner ghost cell at T_core. The analogous
-marginally-unbound imports come from `winds/generate_model_1d_mu.py`.
+marginally-unbound imports come from `winds/generate_model_1d_mu.py`. The
+copies actually run live in `runs/<name>/outflow.import.txt`; only the
+300-cell production import (`outflow_f0.94_Mdot15.0_n300.import.txt`, from
+`python generate_model_1d_f.py --ncells 300`) is also kept here. Both
+generator scripts print the Sirocco `Central_object.{radius,temp,
+dilution_factor}` and `Wind.radmax` values implied by each import (the
+diluted-interior rule T_color = T_core·τ_in^(1/4), W = 1/τ_in with
+τ_in = min(100, τ_base)).
 
 ## Reproducing everything from scratch
 
 ```bash
-pip install -r winds/requirements.txt   # (+ analysis/requirements.txt for the notebooks)
+pip install -r winds/requirements.txt   # winds scripts. NB: analysis/requirements.txt
+                                        # pins DIFFERENT versions — use a separate venv
+                                        # (or any recent stack) for the notebooks.
 
 # Layer 1: dimensionless solutions (minutes; f=0.94 is the slow one)
 cd winds
@@ -106,8 +116,8 @@ jupyter nbconvert --to notebook --execute --inplace FigPhotonTiredAndMBProfiles.
 ```
 
 `solve_f_grid.py` with no arguments solves its full default grid, which
-includes f = 0.95 — expect that one to fail with a RuntimeError explaining
-the stall; this is the documented solver limit, not a bug.
+includes f = 0.95 — expect that one to print `FAILED:` (the stall) and
+continue; this is the documented solver limit, not a bug.
 
 Note on bit-level reproducibility: `scipy.integrate.solve_bvp` mesh
 refinement can vary slightly across SciPy versions, so regenerated `.npz`
@@ -161,12 +171,13 @@ The nine Sirocco notebooks read post-processing tables and spectra that are
 
 ```bash
 export SIROCCO_REPRO_DATA=/path/to/data      # dir containing repro/<run-name>/
-export SIROCCO_REPRO_RUNSET=repro            # default; "legacy" = paper-freeze layout
 ```
 
-Each notebook's first code cell has a `# ==== config ====` block with the
-run-name map (`RUN_DIRS_REPRO`) — that map is the authoritative record of
-which run feeds which panel.
+Each Sirocco notebook's first code cell has a `# ==== config ====` block with
+the run-name map (`RUN_DIRS`, or `PAIRS` in the truncation-comparison appendix
+notebook) — that map is the authoritative record of which run feeds which
+panel. `FigPhotonTiredAndMBProfiles` has no such block: it reads only
+`winds/runs_f/models/` inside the repo.
 
 ## Figure manifest
 
@@ -183,8 +194,11 @@ which run feeds which panel.
 | `FigPhotonTiredAndMBProfiles.ipynb` | `FigPhotonTiredAndMBProfiles` | (analytic; `winds/` only — runs without Sirocco data) | `winds/runs_f/models/*.npz` |
 | `FigAppTruncatedSpectraComparison.ipynb` | `FigAppTruncatedSpectraComparison` | mu_m15 + ptf_m15, truncated vs full domain | `log_spec` (+ `halpha_hires`) of both treatments |
 
-**Truncation policy:** the two spectra figures read the truncated
-(converged-cells-only) reruns for mu_m15, ptf_m10 and ptf_m15; flux blueward
+**Truncation policy:** `Fig_LRD_gallery` reads the truncated
+(converged-cells-only) reruns for mu_m15, ptf_m10 and ptf_m15;
+`Fig_LRD_halpha` reads the truncated products for the two m15 runs and the
+full-domain run for ptf_m10 (whose Hα is truncation-insensitive at the ≤4%
+level). Flux blueward
 of the Balmer edge depends on the unconverged outer wind (full-domain and
 truncated treatments disagree there by orders of magnitude) and is not a
 robust prediction of these models. `FigAppTruncatedSpectraComparison.ipynb`
