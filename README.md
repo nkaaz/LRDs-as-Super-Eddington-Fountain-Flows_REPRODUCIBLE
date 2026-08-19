@@ -76,7 +76,7 @@ f → 1 needs a matched asymptotic treatment, not more resolution).
 ### 2. `winds/runs_f/models/f{F}_Mdot{X}.npz` — physical profiles (`winds/generate_model_1d_f.py`)
 
 Dimensionalized profiles for f ∈ {0.60, 0.90, 0.94} ×
-Ṁ ∈ {2.5, 5, 10, 15, 20} M☉/yr: CGS arrays `r, v, rho, tau` (Thomson depth)
+Ṁ ∈ {2.5, 5, 10, 15} M☉/yr: CGS arrays `r, v, rho, tau` (Thomson depth)
 plus all scalars (R, v_esc, L₀, τ★, τ_base, …).
 
 ### 3. `winds/sirocco_imports_f/` — Sirocco inputs (regenerated on demand)
@@ -159,7 +159,7 @@ converge (a grid-resolution limit cycle; see `ENVIRONMENT.md`, "Radial
 resolution"). All other runs use 100 cells, verified steady.
 
 `*_trunc_speconly` dirs are spectrum-only reruns on truncated winds (the
-production source for all emergent spectra) and `halpha_hires/` subdirs are
+production source for the two m15 emergent spectra) and `halpha_hires/` subdirs are
 narrow-band Hα reruns — both documented in `ENVIRONMENT.md`. `runs/mu_m15/`
 also carries `outflow.restart.slurm`, the `-r` spectrum restart that completed
 its 20 spectrum cycles after a walltime timeout.
@@ -194,11 +194,9 @@ panel. `FigPhotonTiredAndMBProfiles` has no such block: it reads only
 | `FigPhotonTiredAndMBProfiles.ipynb` | `FigPhotonTiredAndMBProfiles` | (analytic; `winds/` only — runs without Sirocco data) | `winds/runs_f/models/*.npz` |
 | `FigAppTruncatedSpectraComparison.ipynb` | `FigAppTruncatedSpectraComparison` | mu_m15 + ptf_m15, truncated vs full domain | `log_spec` (+ `halpha_hires`) of both treatments |
 
-**Truncation policy:** `Fig_LRD_gallery` reads the truncated
-(converged-cells-only) reruns for mu_m15, ptf_m10 and ptf_m15;
-`Fig_LRD_halpha` reads the truncated products for the two m15 runs and the
-full-domain run for ptf_m10 (whose Hα is truncation-insensitive at the ≤4%
-level). Flux blueward
+**Truncation policy:** the two spectra figures read the truncated
+(converged-cells-only) reruns for the two m15 runs; all other runs, including
+ptf_m10, are read full-domain. Flux blueward
 of the Balmer edge depends on the unconverged outer wind (full-domain and
 truncated treatments disagree there by orders of magnitude) and is not a
 robust prediction of these models. `FigAppTruncatedSpectraComparison.ipynb`

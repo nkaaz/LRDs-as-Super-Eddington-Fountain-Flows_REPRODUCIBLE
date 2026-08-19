@@ -96,22 +96,19 @@ RCUT is set at the outer edge of the contiguously converged core:
 run `windsave2table` on the parent, read the `converge` column of
 `outflow.converge.txt` (0 = converged), and place the cut at the first cell
 of the sustained unconverged tail (≥5 consecutive failed cells); isolated
-interior failures (runs of <5 cells) are tolerated. For ptf_m10 this boundary
-coincides with 1.35× the hydrogen recombination front:
+interior failures (runs of <5 cells) are tolerated:
 
 | run | RCUT | criterion | cells kept |
 |---|---|---|---|
 | mu_m15 | 8.509e18 cm | converged-core end (sustained tail from cell 76) | 0–75 of 99 |
 | ptf_m15_n300 | 5.245e17 cm | converged-core end (sustained tail from cell 137); keeps the whole recombination front (r = 3.59e17) | 0–136 of 299 |
-| ptf_m10 | 4.111e17 cm | 1.35× the recombination front (cell 47, r = 3.05e17) | 0–49 of 99 |
 
 Truncation sensitivity (quantified in `FigAppTruncatedSpectraComparison`):
 for mu_m15, whose cut sits essentially at its electron-scattering photosphere
 (0.83 r_ph), the truncated and full-domain spectra agree closely redward of
-the Balmer edge; for the photon-tired runs, whose cuts sit inside their
-photospheres (0.26–0.37 r_ph), the removed unconverged tail absorbs up to
-~half the optical, so the truncated (converged-cells-only) spectrum is the
-production statement. Everything blueward of the Balmer edge depends on the
+the Balmer edge; for ptf_m15, whose cut sits inside its photosphere
+(0.26 r_ph), the removed unconverged tail absorbs up to ~half the optical,
+so the truncated (converged-cells-only) spectrum is the production statement. Everything blueward of the Balmer edge depends on the
 unconverged outer wind in *both* treatments (they disagree by 1–4 dex there)
 and is not a robust prediction of these models.
 
