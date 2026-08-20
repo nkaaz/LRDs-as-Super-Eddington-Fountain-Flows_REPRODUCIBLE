@@ -25,8 +25,7 @@ separately on Zenodo (DOI below) because they are too large for git.
 | Regenerate the analytic wind models themselves | a laptop with Python | minutes | **Part 2** |
 | Re-run the radiative-transfer simulations from scratch | a Linux cluster with MPI + GSL | days of computing | **Part 3** and `ENVIRONMENT.md` |
 
-Most readers want Part 1. It does **not** require installing or building any
-simulation software.
+Most readers want Part 1, which needs no simulation software.
 
 ---
 
@@ -39,15 +38,13 @@ git clone --recurse-submodules <this-repo-url>
 cd <repo-folder>
 ```
 
-If you cloned without `--recurse-submodules` (or downloaded a ZIP), the folder
-`winds/tiring_solver/` will be empty. That's fine for this part — it is only
-needed in Part 2. To fetch it later: `git submodule update --init`.
+Without `--recurse-submodules` the `winds/tiring_solver/` submodule is empty.
+That only matters for Part 2; `git submodule update --init` fetches it later.
 
 **Step 2. Download and unpack the simulation outputs.**
 
-From the Zenodo archive (DOI to be added here), download
-`sirocco_outputs.tar.gz` (~84 MB). Move the downloaded file into your
-current folder (browsers usually save to `~/Downloads`), then unpack it:
+Download `sirocco_outputs.tar.gz` (~84 MB) from the Zenodo archive (DOI to be
+added here) into this folder, then unpack it:
 
 ```bash
 mkdir sirocco_data
@@ -56,7 +53,7 @@ tar -xzf sirocco_outputs.tar.gz -C sirocco_data
 
 This creates `sirocco_data/repro/` with one folder per simulation, plus
 `README_DATA.md` (describing every file) and `MANIFEST.sha256`. To verify the
-download is intact:
+download:
 
 ```bash
 cd sirocco_data && sha256sum -c MANIFEST.sha256 && cd ..
@@ -68,13 +65,9 @@ cd sirocco_data && sha256sum -c MANIFEST.sha256 && cd ..
 export SIROCCO_REPRO_DATA=/full/path/to/sirocco_data
 ```
 
-This sets an *environment variable* — a named value that programs started
-from this terminal can read. It only lasts for the current terminal session,
-so run it in the **same terminal** you will start Jupyter from (or add the
-line to your `~/.bashrc`). If you forget this step, the notebooks fall back
-to the authors' cluster path and fail with an error like
-`FileNotFoundError: /scratch/gpfs/nk6352/...` — that error means "set
-`SIROCCO_REPRO_DATA`".
+Set it in the same shell you start Jupyter from, or add it to your
+`~/.bashrc`. Without it the notebooks fall back to the authors' cluster path
+and fail with `FileNotFoundError: /scratch/gpfs/nk6352/...`.
 
 **Step 4. Install the Python packages.**
 
@@ -95,23 +88,23 @@ cd analysis
 for nb in Fig*.ipynb; do jupyter nbconvert --to notebook --execute --inplace "$nb"; done
 ```
 
-Each notebook writes its figure into `figures/` as a PDF (and a PNG, which is
-not tracked by git). The PDFs already committed in `figures/` were produced by
-exactly this procedure, so you can compare your output against them directly.
-The first code cell of each notebook has a `# ==== config ====` block naming
-the simulation folder(s) it reads — that block is the authoritative record of
-which run feeds which panel. Which notebook makes which paper figure is
-listed in the [figure manifest](#figure-manifest) below.
+Each notebook writes its figure into `figures/` as a PDF (plus an untracked
+PNG). The committed PDFs came from exactly this procedure, so you can compare
+against them directly. The first code cell of each notebook has a
+`# ==== config ====` block naming the simulation folder(s) it reads — the
+authoritative record of which run feeds which panel. Which notebook makes
+which paper figure is listed in the [figure manifest](#figure-manifest)
+below.
 
 ---
 
 ## Part 2 — Regenerate the wind models (laptop, minutes)
 
 The wind models are solutions of the Owocki et al. (2017) photon-tired wind
-equations; the solver lives in the `winds/tiring_solver/` submodule (fetch it
-with `git submodule update --init` if the folder is empty; its own README
-documents the method and range of validity, and `validate.py` re-verifies
-every solution against the governing equations).
+equations. The solver is the `winds/tiring_solver/` submodule (`git submodule
+update --init` if it is empty); its README documents the method and range of
+validity, and `validate.py` re-verifies every solution against the governing
+equations.
 
 ```bash
 pip install -r winds/requirements.txt   # NB: pins DIFFERENT versions than
@@ -157,9 +150,9 @@ scripts record the exact invocations (ranks, photons, cycles, wall-times).
 Expect each production model to need several hundred CPU cores for hours to
 days.
 
-**`ENVIRONMENT.md` walks through all of it command by command — including how
-to apply the patches, assuming no prior experience with git — plus the
-post-processing that turns raw outputs into the tables the notebooks read.**
+**`ENVIRONMENT.md` walks through all of it command by command — applying the
+patches, building, running — plus the post-processing that turns raw outputs
+into the tables the notebooks read.**
 Once your own runs are post-processed, point `SIROCCO_REPRO_DATA` at them and
 Part 1 works unchanged.
 
