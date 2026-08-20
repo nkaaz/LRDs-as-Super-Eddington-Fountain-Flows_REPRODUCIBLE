@@ -5,3 +5,6 @@ scipy==1.13.1
 pandas==2.2.2
 matplotlib==3.9.2
 nbconvert==7.16.4
+# for running the notebooks themselves (any recent versions work):
+jupyterlab
+ipykernel
