@@ -16,7 +16,7 @@ sirocco_patches/   our six modifications to the public Sirocco code as numbered 
 analysis/          figure notebooks
 figures/           the rendered paper figures
 ENVIRONMENT.md     step-by-step guide to building the modified Sirocco and re-running the simulations
-paper_draft.pdf    the manuscript this package accompanies
+paper.pdf          the manuscript this package accompanies
 ```
 
 
@@ -24,7 +24,7 @@ paper_draft.pdf    the manuscript this package accompanies
 ## Three ways to use this repo
 
 
-| You want to…                                                | Ran on                   | Time              | Follow                          |
+| You want to…                                                | Runs on                  | Time              | Follow                          |
 | ----------------------------------------------------------- | ------------------------ | ----------------- | ------------------------------- |
 | Reproduce every figure from the archived simulation outputs | a laptop                 | ~30 min           | **Part 1**                      |
 | Regenerate the analytic wind models                         | a laptop                 | minutes           | **Part 2**                      |
@@ -44,7 +44,7 @@ git clone --recurse-submodules <this-repo-url>
 cd <repo-folder>
 ```
 
-Without `--recurse-submodules` the `winds/tiring_solver/` submodule is empty. `That only matters for Part 2`.
+Without `--recurse-submodules` the `winds/tiring_solver/` submodule is empty; that only matters for Part 2.
 
 **Step 2. Download and unpack the simulation outputs.**
 
@@ -80,7 +80,7 @@ pip install -r analysis/requirements.txt   # optional
 
 **Step 5. Run the notebooks.**
 
-These can be ran interactively or to produce all the figures from the command line, run:
+These can be run interactively, or to produce all the figures from the command line, run:
 
 ```bash
 cd analysis
@@ -94,7 +94,7 @@ Each notebook writes its figure into `figures/` as a PDF and as a PNG.
 ## Part 2 — Wind models
 
 The wind models are solutions of the Owocki et al. (2017) photon-tired wind
-equations. The solver is the `winds/tiring_solver/` submodule (run`git submodule update --init` if it is empty); it has its own readme, and `validate.py` re-verifies every solution against the governing
+equations. The solver is the `winds/tiring_solver/` submodule (run `git submodule update --init` if it is empty); it has its own readme, and `validate.py` re-verifies every solution against the governing
 equations.
 
 ```bash
@@ -112,7 +112,7 @@ cd ../analysis
 jupyter nbconvert --to notebook --execute --inplace FigPhotonTiredAndMBProfiles.ipynb
 ```
 
-Note: `solve_f_grid.py` run with *no* arguments will also try f = 0.95 and prints `FAILED:` the solver fails at this limit. 
+Note: `solve_f_grid.py` run with *no* arguments also tries f = 0.95 and prints `FAILED:` for it — the solver's continuation stalls at that limit.
 
 The marginally-unbound wind inputs are analytic and come from `winds/generate_model_1d_mu.py`
 the same way. Both generator scripts print the Sirocco
@@ -127,9 +127,8 @@ T_color = T_core·τ_in^(1/4), W = 1/τ_in with τ_in = min(100, τ_base)).
 ## Part 3 — Re-run the radiative-transfer simulations
 
 The spectra and wind diagnostics come from **Sirocco** (Monte-Carlo radiative
-transfer, [https://github.com/sirocco-rt/sirocco](https://github.com/sirocco-rt/sirocco)) using a specific version plus
-
- six modifications in `sirocco_patches/`. Each `runs/<name>/` folder contains all the necessary input and example job scripts. You will need to modify the job scripts for your cluster. 
+transfer, [https://github.com/sirocco-rt/sirocco](https://github.com/sirocco-rt/sirocco)) using a
+specific version plus the six modifications in `sirocco_patches/`. Each `runs/<name>/` folder contains all the necessary input and example job scripts. You will need to modify the job scripts for your cluster. 
 
 `ENVIRONMENT.md` **walks through Sirocco-specific instructions command by command, plus the post-processing that produces tables for the notebooks to read.** Once your own runs are post-processed, point `SIROCCO_REPRO_DATA` at them and
 Part 1 works unchanged.
@@ -140,7 +139,7 @@ Part 1 works unchanged.
 
 # Reference
 
-## Wind data(under `winds/`)
+## Wind data (under `winds/`)
 
 **1.** `winds/runs_f/f{F}.npz` **are dimensionless solutions** (from `solve_f_grid.py`): arrays of `x, w, q, p` (see Owocki+2017 for definitions) plus scalars.`ode_residual` is the stored normalized residual of each verified solution. The runs used in the paper are,
 
@@ -157,7 +156,7 @@ Part 1 works unchanged.
 **2.** `winds/runs_f/models/f{F}_Mdot{X}.npz` **are physical profiles** (from `generate_model_1d_f.py`) in CGS. The arrays are `r, v, rho, tau` (Thomson depth) plus all scalars (R, v_esc, L₀, τ★, τ_base, …) for f ∈ {0.60, 0.90, 0.94} × Ṁ ∈ {2.5, 5, 10, 15} M☉/yr.
 
 **3.** `winds/sirocco_imports_f/` **are the Sirocco input tables**. These are columns (i, r [cm], v_r [cm/s], ρ [g/cm³], T_e [K]) on a log grid — 100 cells, or 300 for the production f = 0.94, Ṁ = 15 import (`--ncells 300`; see
-`ENVIRONMENT.md`, "Radial resolution") — from r_in (τ_es = 100 surface, or R where the base is more transparent) to 10× the τ_es = 1 photosphere, with one inner ghost cell at T_core. Most copies are in `runs/<name>/outflow.import.txt`; the 300-cell production import (`outflow_f0.94_Mdot15.0_n300.import.txt`) is provided here instead. 
+see the paper) — from r_in (τ_es = 100 surface, or R where the base is more transparent) to 10× the τ_es = 1 photosphere, with one inner ghost cell at T_core. The copies actually run are in `runs/<name>/outflow.import.txt`. Imports at non-default resolutions are also kept here, since `generate_model_1d_f.py` with no arguments regenerates only the 100-cell set.
 
 ## Simulations
 
@@ -166,12 +165,14 @@ The simulations are divided into two wind families with four mass-loss rates eac
 
 | physical family                               | `runs/` dirs | notebook keys | data dir (under `$SIROCCO_REPRO_DATA/repro/`) |
 | --------------------------------------------- | ------------ | ------------- | --------------------------------------------- |
-| marginally unbound (v = v_esc, "dilute_redd") | `mu_m*`      | `mu_m*`       | same names                                    |
-| photon-tired, f = 0.94 (Γ₀ = 1.2128)          | `ptf_m*`     | `pt_m*`       | same names                                    |
+| marginally unbound (v = v_esc, "dilute_redd") | `mu_m*`      | `mu_m*`, `MU_m*`, or bare `m*` | same names                   |
+| photon-tired, f = 0.94 (Γ₀ = 1.2128)          | `ptf_m*`     | `pt_m*` or `PT_m*`             | same names                   |
 
 
-`*_trunc_speconly` dirs are spectrum-only reruns on truncated winds (the  
-production source for the two m15 emergent spectra) and `halpha_hires/`  
-subdirs are narrow-band Hα reruns — both documented in `ENVIRONMENT.md`.  
+`*_trunc_speconly` dirs are spectrum-only reruns on truncated winds (the
+production source for the two m15 emergent spectra), documented in
+`ENVIRONMENT.md`; `halpha_hires/` subdirs are narrow-band (6500–6700 Å) Hα
+reruns of the same wind.
+
 `runs/mu_m15/` also carries `outflow.restart.slurm`, a job script for a spectrum restart that completed its 20 spectrum cycles after a wall-time timeout.
 

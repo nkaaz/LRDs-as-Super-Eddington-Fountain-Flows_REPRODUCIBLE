@@ -45,7 +45,7 @@ ls ../bin/sirocco ../bin/windsave2table ../bin/modify_wind
 
 | # | Patch | Why it is required |
 |---|---|---|
-| 0001 | `Central_object.dilution_factor` | New `.pf` parameter: the central source emits a blackbody spectrum at `Central_object.temp` (the color temperature) with luminosity multiplied by W, so L = W·4πR²σT⁴. Every run injects a diluted interior radiation field (W = 1/τ_es(r_in)).
+| 0001 | `Central_object.dilution_factor` | New `.pf` parameter: the central source emits a blackbody spectrum at `Central_object.temp` (the color temperature) with luminosity multiplied by W, so L = W·4πR²σT⁴. Every run injects a diluted interior radiation field (W = 1/τ_es(r_in)). |
 | 0002 | levden tables in `windsave2table` | Writes `rootname.<Elem>_<istate>.levden.txt` (NLTE level populations).|
 | 0003 | `NBINS_IN_CELL_SPEC` 1000→3000 | Per-cell J_ν resolution of `windsave2table -xall` (the `outflow.xspec.all.txt` files the notebooks read have 3001 rows). |
 | 0004 | `MAXSCAT` 2000→200000 | Prevents photons from being destroyed in our runs due to reaching a maximum scattering limit. |
