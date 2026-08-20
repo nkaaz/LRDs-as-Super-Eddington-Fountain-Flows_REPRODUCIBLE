@@ -18,12 +18,17 @@ git checkout 5aef5f17
 git am /path/to/this-repo/sirocco_patches/*.patch
 ./configure          # needs MPI + GSL
 cd source
-make sirocco windsave2table modify_wind
+make -k sirocco windsave2table modify_wind   # exits nonzero; see note
 ```
 
-Note: `make` runs a python-based indent step after linking; if the `python`
-command is missing it errors *after* the binaries are already built — that
-failure can be ignored.
+Note: each target's recipe ends with a python-based indent step; if the
+`python` command is missing it errors *after* that target's binary is already
+linked and installed into `../bin`. The `-k` flag makes `make` continue to the
+remaining targets despite this (without it, `make` stops after the first
+target and only `bin/sirocco` gets built). The overall nonzero exit is
+expected — just confirm all three binaries exist in `../bin/`. This exact
+sequence (clone → `git am` → build → `sirocco -i` dry-run of a production
+`.pf`) has been verified end-to-end on a fresh clone.
 
 Cluster modules used for the paper runs (Princeton Stellar, Intel nodes):
 `gcc-toolset/13 openmpi/gcc/4.1.6 gsl/2.6`. Any MPI + GSL stack should work;
