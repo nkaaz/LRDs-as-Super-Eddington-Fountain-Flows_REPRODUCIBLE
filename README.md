@@ -28,6 +28,7 @@ the governing equations.
     analysis/          figure notebooks (one per paper figure; see manifest below)
     figures/           rendered paper figures (PDF)
     ENVIRONMENT.md     how to build the patched Sirocco, run the models, and post-process them
+    paper_draft.pdf    the manuscript this package accompanies
 
 ## Model setup
 
