@@ -1,7 +1,15 @@
-# Exact versions used to generate the packaged results.
-# Newer versions should work; solve_bvp mesh refinement may differ slightly.
-numpy==2.4.2
-scipy==1.16.2
-matplotlib==3.10.6
-# For executing the figure notebook:
+# Python packages the wind-model solver and generator scripts need.
+#
+# These are LOWER BOUNDS, not pins -- a recent scientific Python stack will
+# already satisfy them, and there is no need to downgrade anything. Note that
+# scipy.integrate.solve_bvp mesh refinement varies slightly between versions,
+# so regenerated .npz files can differ from the committed ones in the last
+# decimal digits; the physical results are insensitive to this.
+#
+# Versions used to generate the packaged results:
+#     numpy 2.4.2   scipy 1.16.2   matplotlib 3.10.6
+numpy>=1.22
+scipy>=1.6              # cumulative_trapezoid, solve_bvp
+matplotlib>=3.5         # only for the FigPhotonTiredAndMBProfiles notebook
+# only needed to execute that notebook; any recent version works
 jupyter

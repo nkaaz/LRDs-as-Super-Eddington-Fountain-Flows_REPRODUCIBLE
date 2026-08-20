@@ -69,14 +69,19 @@ Set it in the same shell you start Jupyter from, or add it to your
 `~/.bashrc`. Without it the notebooks fall back to the authors' cluster path
 and fail with `FileNotFoundError: /scratch/gpfs/nk6352/...`.
 
-**Step 4. Install the Python packages.**
+**Step 4. Check your Python packages.**
+
+The notebooks need numpy, scipy, pandas, matplotlib and Jupyter, in any
+reasonably recent versions — if you already have a scientific Python stack,
+skip this step. Should you want them installed for you:
 
 ```bash
-pip install -r analysis/requirements.txt
+pip install -r analysis/requirements.txt   # optional
 ```
 
-These are the exact versions used for the paper; any reasonably recent
-numpy/scipy/matplotlib/jupyter stack also works.
+That file specifies lower bounds rather than pins, so it will not downgrade an
+existing environment; it also records the exact versions used for the paper,
+should you want to reproduce that environment precisely.
 
 **Step 5. Run the notebooks.**
 
@@ -107,10 +112,8 @@ validity, and `validate.py` re-verifies every solution against the governing
 equations.
 
 ```bash
-pip install -r winds/requirements.txt   # NB: pins DIFFERENT versions than
-                                        # analysis/requirements.txt — use a
-                                        # separate virtual environment (or any
-                                        # recent stack) for the notebooks.
+pip install -r winds/requirements.txt   # optional, as in Part 1 — lower
+                                        # bounds, not pins.
 
 # Dimensionless solutions (minutes; f=0.94 is the slow one)
 cd winds

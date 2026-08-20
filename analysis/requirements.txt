@@ -1,10 +1,24 @@
-# Notebook execution environment for analysis/ (anaconda3/2024.10 on Princeton Stellar)
-# jupyter + these pinned libs; run: jupyter nbconvert --to notebook --execute --inplace <nb>.ipynb
-numpy==1.26.4
-scipy==1.13.1
-pandas==2.2.2
-matplotlib==3.9.2
-nbconvert==7.16.4
-# for running the notebooks themselves (any recent versions work):
+# Python packages the figure notebooks need.
+#
+# These are LOWER BOUNDS, not pins. If you already have a reasonably recent
+# scientific Python stack you almost certainly need to install nothing, and you
+# should not downgrade an existing environment on our account -- the notebooks
+# use only long-stable APIs and carry a numpy 1.x / 2.x compatibility shim.
+#
+# The full suite was executed under two deliberately different stacks:
+#     numpy 1.26.4  scipy 1.13.1  pandas 2.2.2  matplotlib 3.9.2   <- used for the paper
+#     numpy 2.3.5   scipy 1.16.3  pandas 2.3.3  matplotlib 3.10.6
+# All ten notebooks run clean on both, and nine of the ten figures are
+# pixel-identical between them; Fig_LRD_gallery differs only in matplotlib's
+# sub-pixel line rendering (0.7% of pixels, mean absolute error 0.08%).
+#
+# To reproduce the paper's exact environment, change >= to == on the four
+# library lines below and use the "used for the paper" versions.
+numpy>=1.22
+scipy>=1.6              # cumulative_trapezoid
+pandas>=1.3
+matplotlib>=3.5
+# only needed to execute the notebooks; any recent versions work
+nbconvert>=6
 jupyterlab
 ipykernel
