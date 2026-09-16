@@ -2,7 +2,7 @@
 
 The synthetic spectra and wind diagnostics in this paper were produced
 with **Sirocco** (https://github.com/sirocco-rt/sirocco). We used
-commit `5aef5f17` plus six small local patches provided in
+commit `5aef5f17` plus five small local patches provided in
 `sirocco_patches/`. 
 
 ## Instructions
@@ -21,7 +21,7 @@ cd sirocco
 git checkout 5aef5f17
 ```
 
-**Step 2. Apply the six patches.**
+**Step 2. Apply the five patches.**
 
 ```bash
 git am /path/to/this-repo/sirocco_patches/*.patch
@@ -41,16 +41,15 @@ Success means the three executables now exist:
 ls ../bin/sirocco ../bin/windsave2table ../bin/modify_wind
 ```
 
-## The six patches
+## The five patches
 
 | # | Patch | Why it is required |
 |---|---|---|
 | 0001 | `Central_object.dilution_factor` | New `.pf` parameter: the central source emits a blackbody spectrum at `Central_object.temp` (the color temperature) with luminosity multiplied by W, so L = W·4πR²σT⁴. Every run injects a diluted interior radiation field (W = 1/τ_es(r_in)). |
 | 0002 | levden tables in `windsave2table` | Writes `rootname.<Elem>_<istate>.levden.txt` (NLTE level populations).|
-| 0003 | `NBINS_IN_CELL_SPEC` 1000→3000 | Per-cell J_ν resolution of `windsave2table -xall` (the `outflow.xspec.all.txt` files the notebooks read have 3001 rows). |
-| 0004 | `MAXSCAT` 2000→200000 | Prevents photons from being destroyed in our runs due to reaching a maximum scattering limit. |
-| 0005 | `xdata/h20_hetop_standard80_z0.1.dat` | The 10%-metallicity atomic dataset (`Atomic_data data/h20_hetop_standard80_z0.1.dat`). |
-| 0006 | `modify_wind -rcut` | Builds the truncated wind-saves used by the spectrum-only reruns (see below). |
+| 0003 | `NBINS_IN_CELL_SPEC` 1000→3000 and `MAXSCAT` 2000→200000 (two constants in `sirocco.h`) | Per-cell J_ν resolution of `windsave2table -xall` (the `outflow.xspec.all.txt` files the notebooks read have 3001 rows); and prevents photons from being destroyed in our optically thick runs due to reaching a maximum scattering limit. |
+| 0004 | `xdata/h20_hetop_standard80_z0.1.dat` | The 10%-metallicity atomic dataset (`Atomic_data data/h20_hetop_standard80_z0.1.dat`). |
+| 0005 | `modify_wind -rcut` | Builds the truncated wind-saves used by the spectrum-only reruns (see below). |
 
 ## Running a model
 

@@ -1,7 +1,7 @@
-From 00e66385c422312e70684a2f90b704d9c750dc6f Mon Sep 17 00:00:00 2001
+From c81e3859325197e45e1e9483c6c27e007e20c517 Mon Sep 17 00:00:00 2001
 From: Nick Kaaz <nk6352@stellar-intel.princeton.edu>
 Date: Fri, 17 Jul 2026 10:44:10 -0400
-Subject: [PATCH 5/6] Add 0.1x-metallicity atomic data set
+Subject: [PATCH 4/5] Add 0.1x-metallicity atomic data set
  (h20_hetop_standard80_z0.1)
 
 Sirocco has no pf-level metallicity control: abundances live only in the

@@ -35,6 +35,27 @@ positive residuals, so the Lyman and high-n Balmer forests bracketing each edge
 do not drag the continuum fits.
 
 A cell is "broken" when this ratio first reaches BREAK_THRESHOLD and stays there.
+
+LYMAN PHOTOIONIZATION TRANSITION (not the same radius)
+------------------------------------------------------
+The factor-2 spectral break forms where the incident Lyman continuum has lost
+only its first e-fold (tau_eff ~ ln 2). The hand-over of ground-state ionization
+from the transmitted incident LyC to the local on-the-spot recombination
+continuum -- the step in FigGamma1_residuals, and the zero-crossing of the n=2
+residual at low Mdot -- completes only once the incident LyC is essentially
+gone. Measured against those residuals on the mu grid (2026-09-13), the
+inside-out ABSORPTION depth of the Lyman continuum from the base,
+
+    tau_LyC(r) = INT_{r_in}^{r} n_1 sigma_1 dr',   sigma_1 = 6.30e-18,
+
+reaches TAU_LYC_TRANSITION = 3 at 38.6 / 7.0 / 2.5 / 1.6 r_sph for
+m2.5 / m5 / m10 / m15, against a measured hand-over at 39-41 / 7-8 / 1.9-2.4 /
+1.4-1.6; the spectral break sits 30-50% inside it at low Mdot (27 / 3.7).
+No fixed threshold on the spectral jump or on tau_eff = sqrt(3 tau_abs chi)
+works across the grid (the jump at the hand-over runs from 1.4 to 378), because
+the incident LyC supply varies by orders of magnitude with the input colour
+temperature. Use lyc_transition_radius() for the photoionization transition and
+break_radius() only for the spectral edge itself.
 """
 import numpy as np
 
@@ -42,6 +63,8 @@ import numpy as np
 NU_LYMAN  = 3.2900e15          # Hz, 912 A
 NU_BALMER = NU_LYMAN / 4.0     # Hz, 3646 A
 BREAK_THRESHOLD = 2.0          # continuum drops by >= this factor across the edge
+TAU_LYC_TRANSITION = 3.0       # inside-out LyC absorption depth at the photoionization hand-over
+SIG_LYC = 6.30e-18             # H I ground-state threshold cross-section [cm^2] (Sirocco h20 data)
 GUARD = 1.06                   # skip +/-6% about the edge (bin width + MC smearing)
 SPAN  = 1.40                   # fit the continuum out to +/-40%
 KEEP  = 0.60                   # fraction of bins retained per clipping pass (drops lines)
@@ -105,6 +128,30 @@ def break_radius(freq, jnu, r, nu_edge, thresh=BREAK_THRESHOLD, nhold=3):
                 return float(r[i])
             return float(np.interp(thresh, [lo, hi], [r[i - 1], r[i]]))
     return np.nan
+
+
+
+def transition_radius_from_tau(r, tau, tau_c=TAU_LYC_TRANSITION):
+    """Radius where a cumulative inside-out optical depth tau(r) (tau[0] at the
+    base) first reaches tau_c, interpolated linearly in log r. NaN if never."""
+    r, tau = np.asarray(r, float), np.asarray(tau, float)
+    above = tau >= tau_c
+    if not above.any():
+        return np.nan
+    i = int(np.argmax(above))
+    if i == 0:
+        return float(r[0])
+    return float(np.exp(np.interp(tau_c, [tau[i - 1], tau[i]], [np.log(r[i - 1]), np.log(r[i])])))
+
+
+def lyc_transition_radius(r, n1, tau_c=TAU_LYC_TRANSITION, sigma=SIG_LYC):
+    """Lyman photoionization transition: radius where the inside-out Lyman-continuum
+    absorption depth INT n_1 sigma_1 dr' from the base reaches tau_c (default 3).
+    r, n1 : (Ncell,) inwind cells, base first. See the module docstring."""
+    r, n1 = np.asarray(r, float), np.asarray(n1, float)
+    dr = np.diff(r)
+    tau = np.concatenate([[0.0], np.cumsum(0.5 * (n1[1:] + n1[:-1]) * sigma * dr)])
+    return transition_radius_from_tau(r, tau, tau_c)
 
 
 def selftest(verbose=True):

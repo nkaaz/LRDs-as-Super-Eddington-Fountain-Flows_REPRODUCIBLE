@@ -12,7 +12,7 @@ separately on Zenodo (DOI below).
 ```
 winds/             wind-model solver (included as a git submodule), generation scripts, and all wind-model data
 runs/              Sirocco simulation configurations (input files and example job scripts, one folder per run)
-sirocco_patches/   our six modifications to the public Sirocco code as numbered patch files
+sirocco_patches/   our five modifications to the public Sirocco code as numbered patch files
 analysis/          figure notebooks
 figures/           the rendered paper figures
 ENVIRONMENT.md     step-by-step guide to building the modified Sirocco and re-running the simulations
@@ -128,7 +128,7 @@ T_color = T_core·τ_in^(1/4), W = 1/τ_in with τ_in = min(100, τ_base)).
 
 The spectra and wind diagnostics come from **Sirocco** (Monte-Carlo radiative
 transfer, [https://github.com/sirocco-rt/sirocco](https://github.com/sirocco-rt/sirocco)) using a
-specific version plus the six modifications in `sirocco_patches/`. Each `runs/<name>/` folder contains all the necessary input and example job scripts. You will need to modify the job scripts for your cluster. 
+specific version plus the five modifications in `sirocco_patches/`. Each `runs/<name>/` folder contains all the necessary input and example job scripts. You will need to modify the job scripts for your cluster. 
 
 `ENVIRONMENT.md` **walks through Sirocco-specific instructions command by command, plus the post-processing that produces tables for the notebooks to read.** Once your own runs are post-processed, point `SIROCCO_REPRO_DATA` at them and
 Part 1 works unchanged.

@@ -16,3 +16,5 @@ runs/**/*.sig
 runs/**/*.out.pf
 runs/**/data
 runs/**/zdata
+# superseded notebooks/figures kept locally, never shipped
+archive/

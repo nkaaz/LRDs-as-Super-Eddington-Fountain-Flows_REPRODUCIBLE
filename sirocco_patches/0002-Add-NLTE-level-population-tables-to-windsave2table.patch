@@ -1,7 +1,7 @@
 From ba976b11a74771a8d6c0542a71321e74c5eb36bb Mon Sep 17 00:00:00 2001
 From: Nick Kaaz <nk6352@stellar-intel.princeton.edu>
 Date: Fri, 24 Apr 2026 11:32:56 -0400
-Subject: [PATCH 2/6] Add NLTE level population tables to windsave2table
+Subject: [PATCH 2/5] Add NLTE level population tables to windsave2table
 
 Writes rootname.<Element>_<istate>.levden.txt for H I, He I, He II.
 Columns: r i inwind ion_den lev1 lev2 ...levN, where lev* are
