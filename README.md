@@ -1,11 +1,13 @@
 # LRDs as Super-Eddington Fountain Flows — reproducibility package
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22814132.svg)](https://doi.org/10.5281/zenodo.22814132)
+
 This repository accompanies the paper (`paper.pdf`) and
 contains everything needed to reproduce its figures: the wind-model solver and
 generation scripts, the modifications to the Sirocco radiative-transfer
 code, the input files for every simulation, and one Jupyter notebook
 per figure. The simulation *outputs* the notebooks read are archived
-separately on Zenodo (DOI below).
+separately on Zenodo: https://doi.org/10.5281/zenodo.22814132
 
 ## What's in this repository
 
@@ -48,8 +50,8 @@ Without `--recurse-submodules` the `winds/tiring_solver/` submodule is empty; th
 
 **Step 2. Download and unpack the simulation outputs.**
 
-Download `sirocco_outputs.tar.gz` (~84 MB) from the Zenodo archive (DOI to be
-added here) into this folder, then unpack it:
+Download `sirocco_outputs.tar.gz` (~84 MB) from the Zenodo archive
+(https://doi.org/10.5281/zenodo.22814132) into this folder, then unpack it:
 
 ```bash
 mkdir sirocco_data
